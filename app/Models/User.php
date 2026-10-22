@@ -8,6 +8,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -98,5 +99,30 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->canAccessWorkPanel();
+    }
+
+    public function reportedFindings(): HasMany
+    {
+        return $this->hasMany(Finding::class, 'reported_by');
+    }
+
+    public function assignedFindings(): HasMany
+    {
+        return $this->hasMany(Finding::class, 'pic_id');
+    }
+
+    public function areasAsDefaultPic(): HasMany
+    {
+        return $this->hasMany(Area::class, 'default_pic_id');
+    }
+
+    public function wispoRequests(): HasMany
+    {
+        return $this->hasMany(WispoRequest::class, 'requester_user_id');
+    }
+
+    public function roomBookings(): HasMany
+    {
+        return $this->hasMany(RoomBooking::class, 'requester_user_id');
     }
 }

@@ -14,7 +14,7 @@ Di luar MVP (jangan dikerjakan): audit 5R terjadwal, gamifikasi, landing page / 
 - Laravel 12, PHP 8.4 (Laragon di Windows), PostgreSQL 17 (database `aplikasi_5r`)
 - Frontend user: Livewire starter kit resmi (Livewire + Volt + Flux UI + Tailwind 4, Vite)
 - Panel admin & gudang: Filament (panel `admin` di `/admin`, `app/Providers/Filament/AdminPanelProvider.php`)
-- Tes: `php artisan test` (Pest/PHPUnit, `tests/Feature`)
+- Tes: `php artisan test` (PHPUnit, `tests/Feature`) memakai database PostgreSQL terpisah **`aplikasi_5r_test`** (lihat `phpunit.xml`; password diambil dari `.env`). Developer baru harus membuat database ini dulu di pgAdmin.
 - Queue & cache: driver `database`; email: `MAIL_MAILER=log` di lokal
 - Hosting: belum diputuskan (server departemen atau hosting terkelola). Jangan menambah Docker/infra deploy sebelum diputuskan.
 
@@ -34,6 +34,9 @@ npm run build             # build aset produksi
 - **Bahasa UI: Bahasa Indonesia.** Nama tabel/kolom mengikuti `docs/PRD_MVP.md` Bagian 5 (sebagian bahasa Indonesia, mis. status `belum_selesai`). Kode (kelas, method, variabel) dalam bahasa Inggris.
 - **Primary key UUID** untuk semua tabel domain (`HasUuids`).
 - **Hak akses wajib di backend** lewat Policy/Gate — jangan hanya menyembunyikan tombol di UI.
+- **Setiap Filament Resource wajib punya Policy** (`app/Policies/{Model}Policy.php`). Tanpa policy, Filament mengizinkan semua user yang bisa masuk Panel Kerja.
+- Data penting (user, area, barang) tidak dihapus — pakai `is_active`. Policy `delete` mengembalikan `false`.
+- Status & kategori memakai enum di `app/Enums` (implement `HasLabel` + `HasColor` Filament untuk badge). Nilai enum di migration ditulis literal, bukan dari kelas enum.
 - Role: `staff`, `koordinator_5r`, `management`, `admin` (`users.role`); flag `users.is_petugas_gudang`. PIC bukan role.
 - **Stok hanya diubah lewat `StockService`** dalam `DB::transaction()` + `lockForUpdate()`. Tidak ada kode lain yang menulis `wispo_items.current_stock_qty`. Setiap perubahan stok mencatat baris `wispo_transactions`.
 - **Anti-bentrok booking**: validasi di aplikasi + exclusion constraint PostgreSQL (`btree_gist`), lihat PRD 5.4.

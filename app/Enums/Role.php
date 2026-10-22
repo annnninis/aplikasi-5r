@@ -2,14 +2,17 @@
 
 namespace App\Enums;
 
-enum Role: string
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
+
+enum Role: string implements HasColor, HasLabel
 {
     case Staff = 'staff';
     case Koordinator5R = 'koordinator_5r';
     case Management = 'management';
     case Admin = 'admin';
 
-    public function label(): string
+    public function getLabel(): string
     {
         return match ($this) {
             self::Staff => 'Staff',
@@ -19,15 +22,13 @@ enum Role: string
         };
     }
 
-    /**
-     * Pilihan untuk form/select: ['staff' => 'Staff', ...].
-     *
-     * @return array<string, string>
-     */
-    public static function options(): array
+    public function getColor(): string
     {
-        return collect(self::cases())
-            ->mapWithKeys(fn (self $role) => [$role->value => $role->label()])
-            ->all();
+        return match ($this) {
+            self::Staff => 'gray',
+            self::Koordinator5R => 'info',
+            self::Management => 'warning',
+            self::Admin => 'danger',
+        };
     }
 }

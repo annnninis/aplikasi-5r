@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\FindingPriority;
+use App\Enums\FindingStatus;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Finding extends Model
+{
+    use HasUuids;
+
+    protected $fillable = [
+        'source',
+        'area_id',
+        'reported_by',
+        'pic_id',
+        'description',
+        'priority',
+        'deadline',
+        'status',
+        'resolution_note',
+        'revision_note',
+        'rejection_reason',
+        'verified_by',
+        'assigned_at',
+        'resolved_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'priority' => FindingPriority::class,
+            'status' => FindingStatus::class,
+            'deadline' => 'date',
+            'assigned_at' => 'datetime',
+            'resolved_at' => 'datetime',
+        ];
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
+    }
+
+    public function reporter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reported_by');
+    }
+
+    public function pic(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pic_id');
+    }
+
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function photos(): HasMany
+    {
+        return $this->hasMany(FindingPhoto::class);
+    }
+}

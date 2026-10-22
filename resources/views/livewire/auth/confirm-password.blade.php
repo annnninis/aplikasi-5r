@@ -48,7 +48,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 wire:model="password"
                 id="password"
                 label="{{ __('Password') }}"
-                type="password"
+                type="password" viewable
                 name="password"
                 required
                 autocomplete="new-password"

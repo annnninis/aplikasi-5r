@@ -86,7 +86,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 wire:model="password"
                 id="password"
                 label="{{ __('Password') }}"
-                type="password"
+                type="password" viewable
                 name="password"
                 required
                 autocomplete="new-password"
@@ -100,7 +100,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 wire:model="password_confirmation"
                 id="password_confirmation"
                 label="{{ __('Confirm password') }}"
-                type="password"
+                type="password" viewable
                 name="password_confirmation"
                 required
                 autocomplete="new-password"

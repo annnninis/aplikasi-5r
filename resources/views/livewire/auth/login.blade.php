@@ -83,7 +83,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
         <flux:input wire:model="email" label="{{ __('Email address') }}" type="email" name="email" required autofocus autocomplete="email" placeholder="email@example.com" />
 
         <!-- Password -->
-        <div class="relative">
+        <div class="flex flex-col gap-2">
             <flux:input
                 wire:model="password"
                 label="{{ __('Password') }}"
@@ -92,12 +92,15 @@ new #[Layout('components.layouts.auth')] class extends Component {
                 required
                 autocomplete="current-password"
                 :placeholder="__('Password')"
+                viewable
             />
 
             @if (Route::has('password.request'))
-                <x-text-link class="absolute right-0 top-0" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </x-text-link>
+                <div class="flex justify-end">
+                    <x-text-link class="text-sm" href="{{ route('password.request') }}">
+                        {{ __('Forgot your password?') }}
+                    </x-text-link>
+                </div>
             @endif
         </div>
 

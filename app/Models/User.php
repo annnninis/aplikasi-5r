@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
+use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-class User extends Authenticatable // implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasUuids, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,6 +26,10 @@ class User extends Authenticatable // implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'role',
+        'is_petugas_gudang',
+        'unit_kerja',
+        'is_active',
     ];
 
     /**
@@ -44,6 +52,9 @@ class User extends Authenticatable // implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => Role::class,
+            'is_petugas_gudang' => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -54,7 +65,38 @@ class User extends Authenticatable // implements MustVerifyEmail
     {
         return Str::of($this->name)
             ->explode(' ')
+            ->take(2)
             ->map(fn (string $name) => Str::of($name)->substr(0, 1))
             ->implode('');
+    }
+
+    public function hasRole(Role ...$roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
+    }
+
+    public function isPetugasGudang(): bool
+    {
+        return $this->is_petugas_gudang;
+    }
+
+    /**
+     * Panel Kerja (Filament, /admin) hanya untuk user aktif yang mengelola data:
+     * Admin, Koordinator 5R, Management, dan Petugas Gudang.
+     */
+    public function canAccessWorkPanel(): bool
+    {
+        return $this->is_active
+            && ($this->hasRole(Role::Admin, Role::Koordinator5R, Role::Management) || $this->is_petugas_gudang);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->canAccessWorkPanel();
     }
 }

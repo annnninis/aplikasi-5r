@@ -3,12 +3,13 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::redirect('/', '/dashboard')->name('home');
+
+// Satu pintu login: halaman login bawaan Filament diarahkan ke /login.
+Route::redirect('admin/login', '/login');
 
 Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {

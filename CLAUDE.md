@@ -43,6 +43,14 @@ npm run build             # build aset produksi
 - **Feature test wajib** untuk: perubahan stok (termasuk stok tidak cukup), bentrok booking, transisi status temuan, hak akses per role.
 - UI mobile-first: Lapor Cepat & tindak lanjut dipakai dari HP.
 
+## Auth & akses (sudah dibangun, Hari 3)
+- Satu pintu login di `/login` (starter kit). `/admin/login` diarahkan ke `/login`; panel Filament tidak punya login sendiri.
+- Registrasi publik dimatikan; akun dibuat Admin. User `is_active = false` tidak bisa login dan dikeluarkan di request berikutnya (`EnsureUserIsActive`, dipasang di grup `web` dan `authMiddleware` panel).
+- Akses Panel Kerja `/admin`: `User::canAccessWorkPanel()` (Admin, Koordinator 5R, Management, atau Petugas Gudang). Menu "Panel Kerja" di sidebar hanya tampil untuk mereka.
+- Role ada di `App\Enums\Role`; state factory: `admin()`, `koordinator()`, `management()`, `petugasGudang()`, `inactive()`.
+- Akun contoh lokal (dari `DatabaseSeeder`, password lihat docblock seeder): `admin@5r.test`, `koordinator@5r.test`, `manajemen@5r.test`, `gudang@5r.test`, `staff@5r.test`, `nonaktif@5r.test`.
+- Terjemahan: `lang/id/*.php` & `lang/id.json` dari paket laravel-lang (`php artisan lang:update` menimpa perubahan manual di file itu). Teks UI baru ditulis langsung dalam Bahasa Indonesia.
+
 ## Rahasia
 Jangan pernah menulis password/API key ke file yang di-commit atau ke chat. `.env` tidak di-commit; `.env.example` berisi nama variabel tanpa nilai rahasia. `DB_PASSWORD` diisi sendiri oleh pemilik proyek.
 

@@ -46,6 +46,35 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_inactive_users_can_not_authenticate(): void
+    {
+        $user = User::factory()->inactive()->create();
+
+        LivewireVolt::test('auth.login')
+            ->set('email', $user->email)
+            ->set('password', 'password')
+            ->call('login')
+            ->assertHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_deactivated_users_are_logged_out_on_next_request(): void
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $user->update(['is_active' => false]);
+
+        $this->get('/dashboard')->assertRedirect(route('login'));
+        $this->assertGuest();
+    }
+
+    public function test_public_registration_is_disabled(): void
+    {
+        $this->get('/register')->assertNotFound();
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();

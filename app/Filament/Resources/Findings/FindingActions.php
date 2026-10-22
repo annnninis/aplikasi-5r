@@ -63,6 +63,46 @@ class FindingActions
             });
     }
 
+    public static function verify(): Action
+    {
+        return Action::make('verify')
+            ->label('Verifikasi Selesai')
+            ->icon('heroicon-o-check-badge')
+            ->color('success')
+            ->visible(fn (Finding $record): bool => $record->status === FindingStatus::MenungguVerifikasi)
+            ->authorize(fn (Finding $record): bool => Auth::user()->can('manage', $record))
+            ->requiresConfirmation()
+            ->modalHeading('Verifikasi perbaikan')
+            ->modalDescription('Pastikan foto sesudah menunjukkan masalah sudah tertangani. Temuan akan dinyatakan selesai.')
+            ->action(function (Finding $record): void {
+                app(FindingService::class)->verify($record, Auth::user());
+
+                Notification::make()->title('Temuan dinyatakan selesai')->success()->send();
+            });
+    }
+
+    public static function requestRevision(): Action
+    {
+        return Action::make('requestRevision')
+            ->label('Minta Revisi')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('warning')
+            ->visible(fn (Finding $record): bool => $record->status === FindingStatus::MenungguVerifikasi)
+            ->authorize(fn (Finding $record): bool => Auth::user()->can('manage', $record))
+            ->modalHeading('Minta revisi ke PIC')
+            ->schema([
+                Textarea::make('note')
+                    ->label('Apa yang perlu diperbaiki?')
+                    ->required()
+                    ->maxLength(500),
+            ])
+            ->action(function (Finding $record, array $data): void {
+                app(FindingService::class)->requestRevision($record, $data['note']);
+
+                Notification::make()->title('Dikembalikan ke PIC untuk revisi')->success()->send();
+            });
+    }
+
     public static function reject(): Action
     {
         return Action::make('reject')

@@ -68,4 +68,31 @@ class Finding extends Model
     {
         return $this->hasMany(FindingPhoto::class);
     }
+
+    /**
+     * Sisa hari sampai deadline (negatif = lewat). Null jika belum ada deadline.
+     */
+    public function daysLeft(): ?int
+    {
+        return $this->deadline ? (int) today()->diffInDays($this->deadline, false) : null;
+    }
+
+    /**
+     * Warna urgensi untuk PIC: hijau (>3 hari), kuning (0-3 hari), merah (lewat deadline).
+     */
+    public function urgencyColor(): string
+    {
+        $days = $this->daysLeft();
+
+        return match (true) {
+            $this->status === FindingStatus::Terlambat, $days !== null && $days < 0 => 'red',
+            $days !== null && $days <= 3 => 'amber',
+            default => 'green',
+        };
+    }
+
+    public function isOpenForPic(): bool
+    {
+        return in_array($this->status, [FindingStatus::BelumSelesai, FindingStatus::Terlambat], true);
+    }
 }

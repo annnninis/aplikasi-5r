@@ -39,6 +39,12 @@ new #[Layout('components.layouts.auth')] class extends Component {
         RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
+        // Jangan arahkan ke Panel Kerja jika user ini tidak berhak membukanya.
+        if (str_starts_with((string) parse_url(Session::get('url.intended', ''), PHP_URL_PATH), '/admin')
+            && ! Auth::user()->canAccessWorkPanel()) {
+            Session::forget('url.intended');
+        }
+
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
 

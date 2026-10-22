@@ -13,6 +13,8 @@ class ViewFinding extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            FindingActions::verify(),
+            FindingActions::requestRevision(),
             FindingActions::assign(),
             FindingActions::reject(),
         ];

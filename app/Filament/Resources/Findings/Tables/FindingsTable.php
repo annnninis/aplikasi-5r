@@ -76,6 +76,8 @@ class FindingsTable
             ->recordActions([
                 ViewAction::make(),
                 ActionGroup::make([
+                    FindingActions::verify(),
+                    FindingActions::requestRevision(),
                     FindingActions::assign(),
                     FindingActions::reject(),
                 ]),

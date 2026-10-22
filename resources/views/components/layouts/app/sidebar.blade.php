@@ -15,6 +15,12 @@
                 <flux:navlist.group heading="Menu" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>Beranda</flux:navlist.item>
                     <flux:navlist.item icon="camera" :href="route('findings.report')" :current="request()->routeIs('findings.report')" wire:navigate>Lapor Cepat</flux:navlist.item>
+                    @php
+                        $myOpenFindings = \App\Models\Finding::where('pic_id', auth()->id())
+                            ->whereIn('status', ['belum_selesai', 'terlambat'])
+                            ->count();
+                    @endphp
+                    <flux:navlist.item icon="clipboard-document-check" :href="route('findings.mine')" :current="request()->routeIs('findings.mine', 'findings.show')" :badge="$myOpenFindings ?: null" wire:navigate>Temuan Saya</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

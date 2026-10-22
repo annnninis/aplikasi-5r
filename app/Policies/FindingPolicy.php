@@ -39,6 +39,14 @@ class FindingPolicy
         return $user->hasRole(Role::Admin, Role::Koordinator5R);
     }
 
+    /**
+     * Kirim tindak lanjut (foto sesudah): hanya PIC temuan.
+     */
+    public function resolve(User $user, Finding $finding): bool
+    {
+        return $finding->pic_id === $user->id;
+    }
+
     public function update(User $user, Finding $finding): bool
     {
         return false;

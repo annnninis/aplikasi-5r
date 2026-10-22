@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Volt\Volt;
 use Tests\TestCase;
 
 class WorkPanelAccessTest extends TestCase
@@ -14,6 +15,18 @@ class WorkPanelAccessTest extends TestCase
     {
         $this->get('/admin')->assertRedirect(route('login'));
         $this->get('/admin/login')->assertRedirect('/login');
+    }
+
+    public function test_staff_logging_in_after_visiting_the_panel_lands_on_the_dashboard(): void
+    {
+        $staff = User::factory()->create();
+        $this->get('/admin');
+
+        Volt::test('auth.login')
+            ->set('email', $staff->email)
+            ->set('password', 'password')
+            ->call('login')
+            ->assertRedirect(route('dashboard', absolute: false));
     }
 
     public function test_staff_can_not_open_the_work_panel(): void

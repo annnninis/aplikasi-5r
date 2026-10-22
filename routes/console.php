@@ -1,8 +1,6 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote')->hourly();
+// Job harian (PRD MVP §4.5). Di server, jalankan `php artisan schedule:run` tiap menit lewat cron.
+Schedule::command('findings:daily-check')->dailyAt('07:00')->withoutOverlapping();

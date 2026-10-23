@@ -23,6 +23,7 @@
                     <flux:navlist.item icon="clipboard-document-check" :href="route('findings.mine')" :current="request()->routeIs('findings.mine', 'findings.show')" :badge="$myOpenFindings ?: null" wire:navigate>Temuan Saya</flux:navlist.item>
                     <flux:navlist.item icon="cube" :href="route('wispo.stock')" :current="request()->routeIs('wispo.stock')" wire:navigate>Stok Barang</flux:navlist.item>
                     <flux:navlist.item icon="inbox-stack" :href="route('wispo.requests.mine')" :current="request()->routeIs('wispo.requests.*')" wire:navigate>Permintaan Saya</flux:navlist.item>
+                    <flux:navlist.item icon="calendar-days" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')">Booking Ruangan</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

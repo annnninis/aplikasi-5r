@@ -8,7 +8,7 @@ Route::redirect('/', '/dashboard')->name('home');
 // Satu pintu login: halaman login bawaan Filament diarahkan ke /login.
 Route::redirect('admin/login', '/login');
 
-Route::view('dashboard', 'dashboard')
+Volt::route('dashboard', 'dashboard')
     ->middleware(['auth'])
     ->name('dashboard');
 

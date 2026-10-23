@@ -7,9 +7,14 @@
         <flux:sidebar sticky stashable class="border-r border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.toggle class="lg:hidden" icon="x-mark" />
 
-            <a href="{{ route('dashboard') }}" class="mr-5 flex items-center space-x-2" wire:navigate>
-                <x-app-logo class="size-8" href="#"></x-app-logo>
-            </a>
+            <div class="flex items-center justify-between gap-2">
+                <a href="{{ route('dashboard') }}" class="flex min-w-0 items-center space-x-2" wire:navigate>
+                    <x-app-logo class="size-8" href="#"></x-app-logo>
+                </a>
+                <div class="max-lg:hidden">
+                    <livewire:notifications.bell />
+                </div>
+            </div>
 
             <flux:navlist variant="outline">
                 <flux:navlist.group heading="Menu" class="grid">
@@ -97,6 +102,8 @@
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
+
+            <livewire:notifications.bell align="end" />
 
             <flux:dropdown position="top" align="end">
                 <flux:profile

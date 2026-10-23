@@ -19,6 +19,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            // Di server hanya data area awal; akun dibuat lewat `php artisan app:create-admin`.
+            $this->call(AreaSeeder::class);
+            $this->command?->warn('Produksi: akun & barang contoh TIDAK dibuat. Hanya data area awal.');
+
+            return;
+        }
+
         $accounts = [
             ['name' => 'Admin Contoh', 'email' => 'admin@5r.test', 'state' => fn ($f) => $f->admin()],
             ['name' => 'Koordinator 5R Contoh', 'email' => 'koordinator@5r.test', 'state' => fn ($f) => $f->koordinator()],

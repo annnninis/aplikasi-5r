@@ -11,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Livewire\Volt\Volt;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class RoomBookingTest extends TestCase
@@ -81,9 +82,7 @@ class RoomBookingTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider overlappingSlots
-     */
+    #[DataProvider('overlappingSlots')]
     public function test_overlapping_bookings_in_the_same_room_are_rejected(string $start, string $end): void
     {
         $owner = User::factory()->create(['name' => 'Budi']);

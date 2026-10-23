@@ -18,7 +18,8 @@ Di luar MVP (jangan dikerjakan): audit 5R terjadwal, gamifikasi, landing page / 
 - Queue & cache: driver `database` di server (butuh `php artisan queue:work`). Di laptop `.env` memakai `QUEUE_CONNECTION=sync` supaya tidak perlu worker; email `MAIL_MAILER=log` ditulis ke `storage/logs/laravel.log`.
 - Zona waktu: `Asia/Jakarta` (`APP_TIMEZONE`). Job harian `findings:daily-check` jam 07:00 (`routes/console.php`); di server butuh cron `php artisan schedule:run` tiap menit.
 - Notifikasi temuan: `FindingService` memanggil `FindingNotifier` di setiap transisi status → `FindingNotification` (mail + database).
-- Hosting: belum diputuskan (server departemen atau hosting terkelola). Jangan menambah Docker/infra deploy sebelum diputuskan.
+- Hosting: belum diputuskan (server departemen atau hosting terkelola). Panduan kedua opsi: `docs/DEPLOY.md`. Jangan menambah Docker/infra deploy sebelum diputuskan.
+- Setup server: `php artisan app:create-admin` membuat Admin pertama; `db:seed` di produksi hanya mengisi area awal (tanpa akun/barang contoh).
 
 ## Perintah
 ```bash

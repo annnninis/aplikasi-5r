@@ -57,6 +57,10 @@ class WispoRequestsTable
                     ->label('Rencana kembali')
                     ->date('d M Y')
                     ->placeholder('-')
+                    ->color(fn (WispoRequest $record): ?string => $record->status === WispoRequestStatus::Terlambat ? 'danger' : null)
+                    ->description(fn (WispoRequest $record): ?string => $record->actual_return_at
+                        ? 'Kembali '.$record->actual_return_at->translatedFormat('d M Y')
+                        : null)
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
@@ -73,7 +77,32 @@ class WispoRequestsTable
             ->recordActions([
                 self::approve(),
                 self::reject(),
+                self::confirmReturn(),
             ]);
+    }
+
+    public static function confirmReturn(): Action
+    {
+        return Action::make('confirmReturn')
+            ->label('Konfirmasi Kembali')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('primary')
+            ->button()
+            ->visible(fn (WispoRequest $record): bool => in_array($record->status, [WispoRequestStatus::Dipinjam, WispoRequestStatus::Terlambat], true))
+            ->authorize(fn (WispoRequest $record): bool => Auth::user()->can('decide', $record))
+            ->modalHeading('Konfirmasi pengembalian')
+            ->modalDescription(fn (WispoRequest $record): string => "{$record->requester->name} mengembalikan {$record->qty} {$record->item->unit} {$record->item->name}. Stok akan bertambah kembali.")
+            ->schema([
+                Textarea::make('notes')
+                    ->label('Kondisi barang saat kembali')
+                    ->placeholder('mis. Baik, lengkap dengan charger')
+                    ->maxLength(500),
+            ])
+            ->action(function (WispoRequest $record, array $data): void {
+                app(WispoRequestService::class)->confirmReturn($record, Auth::user(), $data['notes'] ?? null);
+
+                Notification::make()->title('Pengembalian dikonfirmasi')->success()->send();
+            });
     }
 
     public static function approve(): Action

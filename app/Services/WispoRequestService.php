@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\WispoItem;
 use App\Models\WispoRequest;
 use App\Notifications\WispoRequestNotification;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -122,6 +123,91 @@ class WispoRequestService
             route('wispo.requests.mine'));
 
         return $request;
+    }
+
+    /**
+     * Petugas Gudang menerima barang pinjaman kembali (juga untuk yang sudah terlambat).
+     */
+    public function confirmReturn(WispoRequest $request, User $receiver, ?string $notes = null): WispoRequest
+    {
+        DB::transaction(function () use ($request, $receiver, $notes) {
+            $locked = WispoRequest::whereKey($request->getKey())->lockForUpdate()->firstOrFail();
+            $this->ensureStatus($locked, [WispoRequestStatus::Dipinjam, WispoRequestStatus::Terlambat]);
+
+            $this->stock->record(
+                $locked->item,
+                WispoTransactionType::Kembali,
+                $locked->qty,
+                $receiver,
+                $locked->requester->name,
+                $notes,
+                $locked,
+            );
+
+            $locked->update([
+                'status' => WispoRequestStatus::Dikembalikan,
+                'actual_return_at' => now(),
+                'return_notes' => $notes,
+            ]);
+
+            $request->setRawAttributes($locked->getAttributes(), true);
+        });
+
+        $this->notify(collect([$request->requester]), $request, 'returned',
+            'Pengembalian barang dikonfirmasi',
+            'Barang pinjaman Anda sudah diterima kembali oleh Gudang. Terima kasih!',
+            route('wispo.requests.mine'));
+
+        return $request;
+    }
+
+    /**
+     * Job harian: peminjaman yang lewat tanggal rencana kembali jadi "Terlambat" + eskalasi.
+     *
+     * @return EloquentCollection<int, WispoRequest>
+     */
+    public function markOverdueLoans(): EloquentCollection
+    {
+        $overdue = WispoRequest::with(['item', 'requester'])
+            ->where('status', WispoRequestStatus::Dipinjam)
+            ->whereDate('expected_return_at', '<', today())
+            ->get();
+
+        foreach ($overdue as $request) {
+            $request->update(['status' => WispoRequestStatus::Terlambat]);
+
+            $this->notify(collect([$request->requester]), $request, 'overdue',
+                'Peminjaman Anda terlambat',
+                'Tanggal rencana kembali sudah lewat. Segera kembalikan barang ke Gudang SPO 3A.',
+                route('wispo.requests.mine'));
+
+            $this->notify($this->warehouseStaff(), $request, 'overdue',
+                'Peminjaman terlambat dikembalikan',
+                "{$request->requester->name} belum mengembalikan {$request->qty} {$request->item->unit} {$request->item->name}.",
+                $this->panelUrl());
+        }
+
+        return $overdue;
+    }
+
+    /**
+     * Job harian: ingatkan peminjam yang harus mengembalikan besok.
+     *
+     * @return EloquentCollection<int, WispoRequest>
+     */
+    public function remindLoansDueTomorrow(): EloquentCollection
+    {
+        $due = WispoRequest::with(['item', 'requester'])
+            ->where('status', WispoRequestStatus::Dipinjam)
+            ->whereDate('expected_return_at', today()->addDay())
+            ->get();
+
+        $due->each(fn (WispoRequest $request) => $this->notify(collect([$request->requester]), $request, 'due_tomorrow',
+            'Pengingat: kembalikan barang besok',
+            'Barang pinjaman Anda dijadwalkan kembali besok.',
+            route('wispo.requests.mine')));
+
+        return $due;
     }
 
     /**

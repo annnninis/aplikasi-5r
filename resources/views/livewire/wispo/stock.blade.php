@@ -88,6 +88,11 @@ new #[Title('Stok Barang')] class extends Component {
                                 <flux:badge size="sm" color="green">Aman</flux:badge>
                             @endif
                         </div>
+                        @if ($item->current_stock_qty > 0)
+                            <flux:button size="sm" variant="primary" class="mt-2 w-full" :href="route('wispo.requests.create', $item)" wire:navigate>Ajukan</flux:button>
+                        @else
+                            <flux:button size="sm" class="mt-2 w-full" disabled>Stok kosong</flux:button>
+                        @endif
                     </div>
                 </div>
             @endforeach

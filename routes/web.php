@@ -17,6 +17,8 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('temuan-saya', 'findings.mine')->name('findings.mine');
     Volt::route('temuan/{finding}', 'findings.show')->name('findings.show');
     Volt::route('stok', 'wispo.stock')->name('wispo.stock');
+    Volt::route('stok/{item}/ajukan', 'wispo.request-form')->name('wispo.requests.create');
+    Volt::route('permintaan-saya', 'wispo.my-requests')->name('wispo.requests.mine');
 
     Route::redirect('settings', 'settings/profile');
 

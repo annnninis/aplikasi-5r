@@ -62,4 +62,33 @@ class WispoRequest extends Model
     {
         return $this->hasMany(WispoTransaction::class, 'request_id');
     }
+
+    /**
+     * Tahapan untuk stepper status (PRD §3.9.3): state = done | active | failed | pending.
+     *
+     * @return list<array{label: string, state: string}>
+     */
+    public function steps(): array
+    {
+        $isLoan = $this->request_type === WispoRequestType::Peminjaman;
+        $labels = $isLoan
+            ? ['Diajukan', 'Menunggu Persetujuan', 'Dipinjam', 'Dikembalikan']
+            : ['Diajukan', 'Menunggu Persetujuan', 'Disetujui & Diambil'];
+
+        // [jumlah tahap selesai, state tahap berikutnya, label pengganti tahap berikutnya]
+        [$done, $nextState, $nextLabel] = match ($this->status) {
+            WispoRequestStatus::MenungguPersetujuan => [1, 'active', null],
+            WispoRequestStatus::Ditolak => [1, 'failed', 'Ditolak'],
+            WispoRequestStatus::Disetujui => [3, null, null],
+            WispoRequestStatus::Dipinjam => [2, 'active', null],
+            WispoRequestStatus::Terlambat => [2, 'failed', 'Terlambat dikembalikan'],
+            WispoRequestStatus::Dikembalikan => [4, null, null],
+        };
+
+        return collect($labels)->map(fn (string $label, int $i) => match (true) {
+            $i < $done => ['label' => $label, 'state' => 'done'],
+            $i === $done && $nextState !== null => ['label' => $nextLabel ?? $label, 'state' => $nextState],
+            default => ['label' => $label, 'state' => 'pending'],
+        })->all();
+    }
 }

@@ -6,6 +6,7 @@ use App\Filament\Resources\WispoItems\Pages\CreateWispoItem;
 use App\Filament\Resources\WispoItems\Pages\EditWispoItem;
 use App\Filament\Resources\WispoItems\Pages\ListWispoItems;
 use App\Filament\Resources\WispoItems\Pages\ViewWispoItem;
+use App\Filament\Resources\WispoItems\RelationManagers\TransactionsRelationManager;
 use App\Filament\Resources\WispoItems\Schemas\WispoItemForm;
 use App\Filament\Resources\WispoItems\Schemas\WispoItemInfolist;
 use App\Filament\Resources\WispoItems\Tables\WispoItemsTable;
@@ -70,6 +71,13 @@ class WispoItemResource extends Resource
     public static function table(Table $table): Table
     {
         return WispoItemsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            TransactionsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

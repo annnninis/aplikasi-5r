@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\Role;
 use App\Enums\WispoTransactionType;
 use App\Models\User;
 use App\Models\WispoItem;
 use App\Models\WispoRequest;
 use App\Models\WispoTransaction;
+use App\Notifications\LowStockNotification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -31,8 +34,9 @@ class StockService
             throw ValidationException::withMessages(['qty' => 'Jumlah harus lebih dari 0.']);
         }
 
-        return DB::transaction(function () use ($item, $type, $qty, $recordedBy, $sourceOrDestination, $notes, $request, $date) {
+        [$transaction, $becameLow] = DB::transaction(function () use ($item, $type, $qty, $recordedBy, $sourceOrDestination, $notes, $request, $date) {
             $locked = WispoItem::whereKey($item->getKey())->lockForUpdate()->firstOrFail();
+            $wasLow = $locked->isLowStock();
 
             $newStock = $type->increasesStock()
                 ? $locked->current_stock_qty + $qty
@@ -60,7 +64,25 @@ class StockService
 
             $item->setRawAttributes($locked->getAttributes(), true);
 
-            return $transaction;
+            return [$transaction, ! $wasLow && $locked->isLowStock()];
         });
+
+        if ($becameLow) {
+            $this->notifyLowStock($item);
+        }
+
+        return $transaction;
+    }
+
+    /**
+     * Kirim sekali saat stok baru melewati batas (bukan di setiap transaksi berikutnya).
+     */
+    private function notifyLowStock(WispoItem $item): void
+    {
+        $recipients = User::where('is_active', true)
+            ->where(fn ($q) => $q->where('is_petugas_gudang', true)->orWhere('role', Role::Admin))
+            ->get();
+
+        Notification::send($recipients, new LowStockNotification($item));
     }
 }

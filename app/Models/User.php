@@ -101,6 +101,15 @@ class User extends Authenticatable implements FilamentUser
         return $this->canAccessWorkPanel();
     }
 
+    /**
+     * Admin, atau PIC dari minimal satu ruang kolaborasi aktif.
+     */
+    public function canApproveBookings(): bool
+    {
+        return $this->is_active
+            && ($this->isAdmin() || $this->areasAsDefaultPic()->bookable()->active()->exists());
+    }
+
     public function reportedFindings(): HasMany
     {
         return $this->hasMany(Finding::class, 'reported_by');

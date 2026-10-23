@@ -8,11 +8,11 @@ use App\Models\User;
 class RoomBookingPolicy
 {
     /**
-     * Daftar semua booking di Panel Kerja (Hari 12): Admin dan PIC ruangan.
+     * Halaman Persetujuan Booking: Admin dan PIC ruang kolaborasi.
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->areasAsDefaultPic()->bookable()->exists();
+        return $user->canApproveBookings();
     }
 
     public function view(User $user, RoomBooking $booking): bool

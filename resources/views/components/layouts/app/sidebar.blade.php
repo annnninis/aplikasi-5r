@@ -23,7 +23,16 @@
                     <flux:navlist.item icon="clipboard-document-check" :href="route('findings.mine')" :current="request()->routeIs('findings.mine', 'findings.show')" :badge="$myOpenFindings ?: null" wire:navigate>Temuan Saya</flux:navlist.item>
                     <flux:navlist.item icon="cube" :href="route('wispo.stock')" :current="request()->routeIs('wispo.stock')" wire:navigate>Stok Barang</flux:navlist.item>
                     <flux:navlist.item icon="inbox-stack" :href="route('wispo.requests.mine')" :current="request()->routeIs('wispo.requests.*')" wire:navigate>Permintaan Saya</flux:navlist.item>
-                    <flux:navlist.item icon="calendar-days" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')">Booking Ruangan</flux:navlist.item>
+                    <flux:navlist.item icon="calendar-days" :href="route('bookings.index')" :current="request()->routeIs('bookings.index')">Booking Ruangan</flux:navlist.item>
+                    <flux:navlist.item icon="calendar" :href="route('bookings.mine')" :current="request()->routeIs('bookings.mine')" wire:navigate>Booking Saya</flux:navlist.item>
+                    @if (auth()->user()->canApproveBookings())
+                        @php
+                            $pendingBookings = \App\Models\RoomBooking::where('approval_status', 'menunggu_persetujuan')
+                                ->when(! auth()->user()->isAdmin(), fn ($q) => $q->whereHas('area', fn ($a) => $a->where('default_pic_id', auth()->id())))
+                                ->count();
+                        @endphp
+                        <flux:navlist.item icon="check-badge" :href="route('bookings.approvals')" :current="request()->routeIs('bookings.approvals')" :badge="$pendingBookings ?: null" wire:navigate>Persetujuan Booking</flux:navlist.item>
+                    @endif
                 </flux:navlist.group>
             </flux:navlist>
 

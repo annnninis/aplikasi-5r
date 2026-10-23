@@ -20,6 +20,8 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('stok/{item}/ajukan', 'wispo.request-form')->name('wispo.requests.create');
     Volt::route('permintaan-saya', 'wispo.my-requests')->name('wispo.requests.mine');
     Volt::route('booking', 'bookings.index')->name('bookings.index');
+    Volt::route('booking-saya', 'bookings.mine')->name('bookings.mine');
+    Volt::route('booking/persetujuan', 'bookings.approvals')->name('bookings.approvals');
 
     Route::redirect('settings', 'settings/profile');
 

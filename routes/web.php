@@ -16,6 +16,7 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('lapor', 'findings.quick-report')->name('findings.report');
     Volt::route('temuan-saya', 'findings.mine')->name('findings.mine');
     Volt::route('temuan/{finding}', 'findings.show')->name('findings.show');
+    Volt::route('stok', 'wispo.stock')->name('wispo.stock');
 
     Route::redirect('settings', 'settings/profile');
 

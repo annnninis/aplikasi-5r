@@ -21,6 +21,7 @@
                             ->count();
                     @endphp
                     <flux:navlist.item icon="clipboard-document-check" :href="route('findings.mine')" :current="request()->routeIs('findings.mine', 'findings.show')" :badge="$myOpenFindings ?: null" wire:navigate>Temuan Saya</flux:navlist.item>
+                    <flux:navlist.item icon="cube" :href="route('wispo.stock')" :current="request()->routeIs('wispo.stock')" wire:navigate>Stok Barang</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

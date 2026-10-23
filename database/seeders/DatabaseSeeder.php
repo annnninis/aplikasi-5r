@@ -2,8 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Enums\WispoTransactionType;
 use App\Models\Area;
 use App\Models\User;
+use App\Models\WispoItem;
+use App\Services\StockService;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -45,5 +48,37 @@ class DatabaseSeeder extends Seeder
             'requires_approval' => true,
             'default_pic_id' => $koordinator->id,
         ]);
+
+        $this->seedSampleItems(User::where('email', 'gudang@5r.test')->first());
+    }
+
+    /**
+     * Barang contoh untuk uji coba WISPO. Stok awal lewat StockService, sama seperti di aplikasi.
+     */
+    private function seedSampleItems(User $petugas): void
+    {
+        $items = [
+            ['HT Motorola XiR P3688', 'HT', 'unit', 12, 4, 'Lemari HT'],
+            ['PH Meter Hanna HI98107', 'PH Meter', 'unit', 3, 2, 'Rak B-1'],
+            ['Proyektor Epson EB-X51', 'Proyektor', 'unit', 2, 1, 'Lemari Multimedia'],
+            ['Kunci Pas Set 8-24 mm', 'Tools', 'set', 6, 2, 'Rak A-2'],
+            ['Multimeter Fluke 117', 'Tools', 'unit', 1, 2, 'Rak A-3'],
+            ['Sarung Tangan Kulit', 'APD', 'pasang', 40, 15, 'Rak C-1'],
+            ['Masker Respirator 3M', 'APD', 'pcs', 8, 20, 'Rak C-2'],
+            ['Baterai AA Alkaline', 'Sparepart', 'pcs', 60, 24, 'Laci Meja Gudang'],
+        ];
+
+        foreach ($items as [$name, $category, $unit, $stock, $safety, $location]) {
+            $item = WispoItem::create([
+                'name' => $name,
+                'category' => $category,
+                'unit' => $unit,
+                'safety_stock_qty' => $safety,
+                'storage_location' => $location,
+                'added_by' => $petugas->id,
+            ]);
+
+            app(StockService::class)->record($item, WispoTransactionType::Masuk, $stock, $petugas, notes: 'Stok awal');
+        }
     }
 }

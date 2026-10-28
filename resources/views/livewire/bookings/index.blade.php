@@ -222,6 +222,8 @@ new #[Title('Booking Ruangan')] class extends Component {
                     <span class="flex items-center gap-1"><span class="size-3 rounded bg-blue-600"></span>Terpakai</span>
                     <span class="flex items-center gap-1"><span class="size-3 rounded bg-amber-500"></span>Menunggu persetujuan</span>
                     <span class="flex items-center gap-1"><span class="size-3 rounded bg-green-600"></span>Booking Anda</span>
+                    <span class="flex items-center gap-1"><span class="h-0.5 w-4 rounded bg-red-600"></span>Jam sekarang</span>
+                    <span class="flex items-center gap-1"><span class="rounded bg-accent px-1 text-[10px] font-semibold uppercase leading-4 text-accent-foreground">Hari ini</span>Judul kolom hari ini</span>
                 </div>
                 <div
                     wire:ignore

@@ -62,6 +62,40 @@ select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
 }
 
+/*
+ * Kalender booking: warna latar hanya untuk status booking (biru/oranye/hijau).
+ * Kolom "hari ini" tidak diwarnai; penandanya ada di judul kolom + garis merah jam sekarang.
+ */
+.room-calendar {
+    --fc-today-bg-color: transparent;
+    --fc-now-indicator-color: var(--color-red-600);
+}
+
+.room-calendar .fc-col-header-cell.fc-day-today {
+    background-color: var(--color-accent);
+}
+
+.room-calendar .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    color: var(--color-accent-foreground);
+}
+
+.room-calendar .fc-today-text {
+    font-weight: 700;
+}
+
+.room-calendar .fc-today-badge {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.9;
+}
+
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */

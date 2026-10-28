@@ -22,6 +22,10 @@ document.addEventListener('alpine:init', () => {
                 slotMinTime: `${String(openHour).padStart(2, '0')}:00:00`,
                 slotMaxTime: `${String(closeHour).padStart(2, '0')}:00:00`,
                 slotDuration: '00:30:00',
+                // Hari ini ditandai di judul kolom (bukan warna latar), karena warna dipakai untuk status booking.
+                dayHeaderContent: (arg) => arg.isToday
+                    ? { html: `<span class="fc-today-text">${arg.text}</span><span class="fc-today-badge">Hari ini</span>` }
+                    : arg.text,
                 allDaySlot: false,
                 nowIndicator: true,
                 height: 'auto',

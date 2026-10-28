@@ -149,7 +149,23 @@ new #[Title('Booking Ruangan')] class extends Component {
         return [
             'rooms' => $rooms,
             'selected' => $rooms->firstWhere('id', $this->room),
+            'timeOptions' => $this->timeOptions(),
         ];
+    }
+
+    /**
+     * Pilihan jam per 15 menit dalam jam operasional (06:00 … 22:00).
+     *
+     * @return list<string>
+     */
+    protected function timeOptions(): array
+    {
+        $times = [];
+        for ($m = BookingService::OPEN_HOUR * 60; $m <= BookingService::CLOSE_HOUR * 60; $m += 15) {
+            $times[] = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+        }
+
+        return $times;
     }
 }; ?>
 
@@ -216,8 +232,18 @@ new #[Title('Booking Ruangan')] class extends Component {
 
                 <flux:input wire:model="date" type="date" :min="today()->toDateString()" label="Tanggal" />
                 <div class="grid grid-cols-2 gap-3">
-                    <flux:input wire:model="start_time" type="time" step="900" label="Mulai" />
-                    <flux:input wire:model="end_time" type="time" step="900" label="Selesai" />
+                    <flux:select wire:model="start_time" label="Mulai" placeholder="--:--">
+                        @foreach ($timeOptions as $time)
+                            @continue($loop->last)
+                            <flux:select.option value="{{ $time }}">{{ $time }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    <flux:select wire:model="end_time" label="Selesai" placeholder="--:--">
+                        @foreach ($timeOptions as $time)
+                            @continue($loop->first)
+                            <flux:select.option value="{{ $time }}">{{ $time }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
                 </div>
                 <flux:textarea wire:model="purpose" label="Tujuan rapat" rows="2" placeholder="Contoh: Rapat koordinasi shift" />
                 <flux:input wire:model="participant_count" type="number" min="1" :max="$selected?->capacity" label="Jumlah peserta" />

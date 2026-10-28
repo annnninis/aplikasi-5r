@@ -104,17 +104,52 @@ class BookingApprovalTest extends TestCase
     {
         $booking = $this->book();
         $otherPic = User::factory()->create();
-        Area::factory()->kolaborasi()->create(['default_pic_id' => $otherPic->id]);
+        Area::factory()->kolaborasi(requiresApproval: true)->create(['default_pic_id' => $otherPic->id]);
         $this->actingAs($otherPic);
 
         Volt::test('bookings.approvals')->assertDontSee($booking->purpose.' ')->call('approve', $booking->id)->assertForbidden();
         $this->assertSame(BookingStatus::MenungguPersetujuan, $booking->refresh()->approval_status);
     }
 
-    public function test_approvals_page_is_only_for_admins_and_room_pics(): void
+    public function test_approvals_page_is_only_for_admins_and_pics_of_rooms_that_need_approval(): void
     {
         $this->actingAs(User::factory()->create())->get('/booking/persetujuan')->assertForbidden();
         $this->actingAs(User::factory()->admin()->create())->get('/booking/persetujuan')->assertOk();
+        $this->actingAs($this->pic)->get('/booking/persetujuan')->assertOk();
+
+        // PIC ruangan yang bisa langsung dipesan tidak punya apa pun untuk disetujui.
+        $freeRoomPic = User::factory()->create();
+        Area::factory()->kolaborasi()->create(['default_pic_id' => $freeRoomPic->id]);
+        $this->actingAs($freeRoomPic)->get('/booking/persetujuan')->assertForbidden();
+        $this->actingAs($freeRoomPic)->get('/dashboard')->assertDontSee('Persetujuan Booking');
+    }
+
+    public function test_room_pic_and_admin_bookings_in_an_approval_room_are_approved_immediately(): void
+    {
+        $mine = $this->book(user: $this->pic);
+        $this->assertSame(BookingStatus::Disetujui, $mine->approval_status);
+        $this->assertTrue($mine->approver->is($this->pic));
+        $this->notified($this->pic, 'confirmed');
+
+        $admin = User::factory()->admin()->create();
+        $adminBooking = $this->book(start: '2026-11-03 13:00', end: '2026-11-03 14:00', user: $admin);
+        $this->assertSame(BookingStatus::Disetujui, $adminBooking->approval_status);
+
+        $staffBooking = $this->book(start: '2026-11-03 15:00', end: '2026-11-03 16:00');
+        $this->assertSame(BookingStatus::MenungguPersetujuan, $staffBooking->approval_status);
+    }
+
+    public function test_time_options_are_every_15_minutes_within_opening_hours(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $html = $this->get('/booking')->assertOk()->getContent();
+
+        $this->assertStringContainsString('value="06:00"', $html);
+        $this->assertStringContainsString('value="09:45"', $html);
+        $this->assertStringContainsString('value="22:00"', $html);
+        $this->assertStringNotContainsString('value="09:50"', $html);
+        $this->assertStringNotContainsString('value="05:45"', $html);
     }
 
     public function test_booker_cancels_an_upcoming_booking(): void

@@ -33,7 +33,7 @@ class RoomBookingPolicy
      */
     public function decide(User $user, RoomBooking $booking): bool
     {
-        return $user->isAdmin() || $booking->area->default_pic_id === $user->id;
+        return $user->approvesBookingsFor($booking->area);
     }
 
     /**

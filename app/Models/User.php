@@ -102,12 +102,20 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Admin, atau PIC dari minimal satu ruang kolaborasi aktif.
+     * Admin, atau PIC dari minimal satu ruang kolaborasi aktif yang bookingnya perlu persetujuan.
      */
     public function canApproveBookings(): bool
     {
         return $this->is_active
-            && ($this->isAdmin() || $this->areasAsDefaultPic()->bookable()->active()->exists());
+            && ($this->isAdmin() || $this->areasAsDefaultPic()->bookable()->active()->where('requires_approval', true)->exists());
+    }
+
+    /**
+     * Berhak menyetujui booking di ruangan ini: Admin atau PIC ruangan tersebut.
+     */
+    public function approvesBookingsFor(Area $area): bool
+    {
+        return $this->is_active && ($this->isAdmin() || $area->default_pic_id === $this->id);
     }
 
     public function reportedFindings(): HasMany

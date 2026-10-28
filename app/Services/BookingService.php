@@ -39,6 +39,9 @@ class BookingService
                     throw $this->clashException($clash);
                 }
 
+                // PIC ruangan / Admin yang memesan tidak perlu menyetujui bookingnya sendiri.
+                $selfApproved = $area->requires_approval && $requester->approvesBookingsFor($area);
+
                 return RoomBooking::create([
                     'area_id' => $area->id,
                     'requester_user_id' => $requester->id,
@@ -46,7 +49,8 @@ class BookingService
                     'participant_count' => $participants,
                     'start_time' => $start,
                     'end_time' => $end,
-                    'approval_status' => $area->requires_approval ? BookingStatus::MenungguPersetujuan : BookingStatus::Disetujui,
+                    'approval_status' => $area->requires_approval && ! $selfApproved ? BookingStatus::MenungguPersetujuan : BookingStatus::Disetujui,
+                    'approved_by' => $selfApproved ? $requester->id : null,
                 ]);
             });
         } catch (QueryException $e) {

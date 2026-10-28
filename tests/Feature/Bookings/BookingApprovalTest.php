@@ -167,6 +167,25 @@ class BookingApprovalTest extends TestCase
         $this->bookings->approve($booking, $this->pic);
     }
 
+    public function test_past_approved_bookings_show_as_finished_and_expired_ones_as_expired(): void
+    {
+        $booker = User::factory()->create();
+        $used = $this->book(Area::factory()->kolaborasi()->create(), '2026-11-02 09:00', '2026-11-02 10:00', $booker);
+        $expired = $this->book(start: '2026-11-02 13:00', end: '2026-11-02 14:00', user: $booker);
+
+        Carbon::setTestNow('2026-11-02 15:00');
+        $this->actingAs($booker);
+
+        // Lewat HTTP supaya pemeriksaan kedaluwarsa (middleware RunDueChecks) ikut berjalan.
+        $this->get('/booking-saya?tab=riwayat')
+            ->assertOk()
+            ->assertSee('Selesai Dipakai')
+            ->assertSee('Kedaluwarsa');
+
+        $this->assertSame(BookingStatus::Kedaluwarsa, $expired->refresh()->approval_status);
+        $this->assertTrue($used->refresh()->isFinished());
+    }
+
     public function test_stepper_reflects_the_booking_journey(): void
     {
         $booking = $this->book();

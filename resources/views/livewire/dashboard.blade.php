@@ -192,7 +192,7 @@ new #[Title('Beranda')] class extends Component {
                         <span class="truncate font-medium">{{ $booking->area->name }}</span>
                         <span class="text-zinc-500">{{ $booking->start_time->translatedFormat('D, d M') }} · {{ $booking->start_time->format('H:i') }}–{{ $booking->end_time->format('H:i') }}</span>
                     </span>
-                    <x-status-badge :status="$booking->approval_status" />
+                    <x-booking-status-badge :booking="$booking" />
                 </a>
             @empty
                 <p class="rounded-xl border border-dashed border-zinc-300 p-4 text-center text-sm text-zinc-500 dark:border-zinc-600">Belum ada booking mendatang.</p>

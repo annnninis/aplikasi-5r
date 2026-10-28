@@ -74,7 +74,7 @@ new #[Title('Booking Saya')] class extends Component {
                     <p class="text-sm">{{ $booking->start_time->translatedFormat('l, d M Y') }} · {{ $booking->start_time->format('H:i') }}–{{ $booking->end_time->format('H:i') }}</p>
                     <p class="text-sm text-zinc-500">{{ $booking->purpose }} · {{ $booking->participant_count }} orang</p>
                 </div>
-                <x-status-badge :status="$booking->approval_status" />
+                <x-booking-status-badge :booking="$booking" />
             </div>
 
             <x-status-stepper :steps="$booking->steps()" />

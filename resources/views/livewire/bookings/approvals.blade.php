@@ -109,7 +109,7 @@ new #[Title('Persetujuan Booking')] class extends Component {
                         <p class="text-sm text-red-700 dark:text-red-400">Alasan ditolak: {{ $booking->rejection_reason }}</p>
                     @endif
                 </div>
-                <x-status-badge :status="$booking->approval_status" />
+                <x-booking-status-badge :booking="$booking" />
             </div>
 
             @if ($booking->approval_status === \App\Enums\BookingStatus::MenungguPersetujuan)

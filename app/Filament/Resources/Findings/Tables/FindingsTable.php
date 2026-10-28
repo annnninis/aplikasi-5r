@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Findings\Tables;
 use App\Enums\FindingPriority;
 use App\Enums\FindingStatus;
 use App\Filament\Resources\Findings\FindingActions;
+use App\Filament\Support\EnumSearch;
 use App\Models\Finding;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
@@ -21,6 +22,7 @@ class FindingsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['area', 'reporter', 'pic', 'photos']))
             ->defaultSort('created_at', 'desc')
+            ->searchPlaceholder('Cari area, deskripsi, status, prioritas, PIC, pelapor')
             ->columns([
                 ImageColumn::make('before_photo')
                     ->label('Foto')
@@ -31,17 +33,23 @@ class FindingsTable
                 TextColumn::make('area.name')
                     ->label('Area')
                     ->description(fn (Finding $record): string => str($record->description)->limit(60))
-                    ->searchable(['description'])
+                    // Cari di deskripsi dan nama area.
+                    ->searchable(query: fn (Builder $query, string $search) => $query->where(fn (Builder $q) => $q
+                        ->where('description', 'ilike', '%'.trim($search).'%')
+                        ->orWhereHas('area', fn (Builder $a) => $a->where('name', 'ilike', '%'.trim($search).'%'))))
                     ->wrap(),
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->searchable(query: EnumSearch::query('status', FindingStatus::class)),
                 TextColumn::make('priority')
                     ->label('Prioritas')
                     ->badge()
+                    ->searchable(query: EnumSearch::query('priority', FindingPriority::class))
                     ->sortable(),
                 TextColumn::make('pic.name')
                     ->label('PIC')
+                    ->searchable(query: EnumSearch::relation('pic', 'name'))
                     ->placeholder('Belum ada'),
                 TextColumn::make('deadline')
                     ->label('Deadline')
@@ -51,6 +59,7 @@ class FindingsTable
                     ->color(fn (Finding $record): ?string => $record->status === FindingStatus::Terlambat ? 'danger' : null),
                 TextColumn::make('reporter.name')
                     ->label('Pelapor')
+                    ->searchable(query: EnumSearch::relation('reporter', 'name'))
                     ->toggleable(),
                 TextColumn::make('created_at')
                     ->label('Dilaporkan')

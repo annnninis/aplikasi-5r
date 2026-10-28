@@ -5,6 +5,7 @@ namespace App\Filament\Resources\WispoRequests\Tables;
 use App\Enums\UsageCategory;
 use App\Enums\WispoRequestStatus;
 use App\Enums\WispoRequestType;
+use App\Filament\Support\EnumSearch;
 use App\Models\WispoRequest;
 use App\Services\WispoRequestService;
 use Filament\Actions\Action;
@@ -24,6 +25,7 @@ class WispoRequestsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['item', 'requester', 'approver']))
             ->defaultSort('created_at', 'desc')
+            ->searchPlaceholder('Cari pemohon, unit, barang, jenis, status, tujuan')
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Diajukan')
@@ -32,26 +34,31 @@ class WispoRequestsTable
                 TextColumn::make('requester.name')
                     ->label('Pemohon')
                     ->description(fn (WispoRequest $record): ?string => $record->requester->unit_kerja)
-                    ->searchable(),
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('requester', fn (Builder $q) => $q
+                        ->where('name', 'ilike', '%'.trim($search).'%')->orWhere('unit_kerja', 'ilike', '%'.trim($search).'%'))),
                 TextColumn::make('item.name')
                     ->label('Barang')
                     ->description(fn (WispoRequest $record): string => "{$record->item->item_code} · stok {$record->item->current_stock_qty} {$record->item->unit}")
-                    ->searchable(['name', 'item_code'])
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('item', fn (Builder $q) => $q
+                        ->where('name', 'ilike', '%'.trim($search).'%')->orWhere('item_code', 'ilike', '%'.trim($search).'%')))
                     ->wrap(),
                 TextColumn::make('request_type')
                     ->label('Jenis')
-                    ->badge(),
+                    ->badge()
+                    ->searchable(query: EnumSearch::query('request_type', WispoRequestType::class)),
                 TextColumn::make('qty')
                     ->label('Jumlah')
                     ->formatStateUsing(fn (WispoRequest $record): string => "{$record->qty} {$record->item->unit}"),
                 TextColumn::make('usage_category')
                     ->label('Pemakaian')
                     ->badge()
+                    ->searchable(query: EnumSearch::query('usage_category', UsageCategory::class))
                     ->toggleable(),
                 TextColumn::make('purpose')
                     ->label('Tujuan')
                     ->limit(40)
                     ->tooltip(fn (WispoRequest $record): string => $record->purpose)
+                    ->searchable(query: EnumSearch::text('purpose'))
                     ->wrap(),
                 TextColumn::make('expected_return_at')
                     ->label('Rencana kembali')
@@ -64,7 +71,8 @@ class WispoRequestsTable
                     ->sortable(),
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->searchable(query: EnumSearch::query('status', WispoRequestStatus::class)),
                 TextColumn::make('approver.name')
                     ->label('Diproses oleh')
                     ->placeholder('-')

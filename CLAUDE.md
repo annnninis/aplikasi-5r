@@ -17,6 +17,7 @@ Di luar MVP (jangan dikerjakan): audit 5R terjadwal, gamifikasi, landing page / 
 - Tes: `php artisan test` (PHPUnit, `tests/Feature`) memakai database PostgreSQL terpisah **`aplikasi_5r_test`** (lihat `phpunit.xml`; password diambil dari `.env`). Developer baru harus membuat database ini dulu di pgAdmin.
 - Queue & cache: driver `database` di server (butuh `php artisan queue:work`). Di laptop `.env` memakai `QUEUE_CONNECTION=sync` supaya tidak perlu worker; email `MAIL_MAILER=log` ditulis ke `storage/logs/laravel.log`.
 - Zona waktu: `Asia/Jakarta` (`APP_TIMEZONE`). Job harian `findings:daily-check` jam 07:00 (`routes/console.php`); di server butuh cron `php artisan schedule:run` tiap menit.
+- Status bergantung waktu (temuan & peminjaman terlambat, booking kedaluwarsa) juga diperbarui oleh middleware `RunDueChecks` saat website dibuka (maks. sekali per 5 menit, grup `web` + panel Filament), jadi tetap akurat tanpa cron. Pengingat H-1 hanya lewat scheduler. Logika transisinya tetap di service (`markOverdue`, `markOverdueLoans`, `expireStalePending`) dan aman dipanggil berulang.
 - Notifikasi temuan: `FindingService` memanggil `FindingNotifier` di setiap transisi status → `FindingNotification` (mail + database).
 - Hosting: belum diputuskan (server departemen atau hosting terkelola). Panduan kedua opsi: `docs/DEPLOY.md`. Jangan menambah Docker/infra deploy sebelum diputuskan.
 - Setup server: `php artisan app:create-admin` membuat Admin pertama; `db:seed` di produksi hanya mengisi area awal (tanpa akun/barang contoh).

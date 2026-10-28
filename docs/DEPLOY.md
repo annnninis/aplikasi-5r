@@ -77,7 +77,9 @@ Setelah itu Admin login, lalu lewat **Panel Kerja**: lengkapi area (PIC, kapasit
 |---|---|---|
 | Web | (Nginx/PHP-FPM atau hosting) | Melayani halaman |
 | Queue worker | `php artisan queue:work --tries=3` | Mengirim email notifikasi |
-| Scheduler | `php artisan schedule:run` **setiap menit** | Job 07:00 (terlambat, pengingat) & kedaluwarsa booking tiap 15 menit |
+| Scheduler | `php artisan schedule:run` **setiap menit** | Pengingat H-1 (temuan, peminjaman, booking) jam 07:00 |
+
+> Status **Terlambat** dan **Kedaluwarsa** juga diperbarui otomatis saat ada yang membuka website (maks. sekali per 5 menit), jadi tetap akurat meski scheduler belum aktif. Tanpa scheduler, yang tidak jalan hanya **pengingat H-1**.
 
 ### Setiap kali ada update kode
 

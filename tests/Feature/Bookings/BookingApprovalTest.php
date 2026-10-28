@@ -124,32 +124,56 @@ class BookingApprovalTest extends TestCase
         $this->actingAs($freeRoomPic)->get('/dashboard')->assertDontSee('Persetujuan Booking');
     }
 
-    public function test_room_pic_and_admin_bookings_in_an_approval_room_are_approved_immediately(): void
+    public function test_room_pic_booking_their_own_room_still_goes_through_approval(): void
     {
         $mine = $this->book(user: $this->pic);
-        $this->assertSame(BookingStatus::Disetujui, $mine->approval_status);
-        $this->assertTrue($mine->approver->is($this->pic));
-        $this->notified($this->pic, 'confirmed');
+        $this->assertSame(BookingStatus::MenungguPersetujuan, $mine->approval_status);
 
-        $admin = User::factory()->admin()->create();
-        $adminBooking = $this->book(start: '2026-11-03 13:00', end: '2026-11-03 14:00', user: $admin);
-        $this->assertSame(BookingStatus::Disetujui, $adminBooking->approval_status);
-
-        $staffBooking = $this->book(start: '2026-11-03 15:00', end: '2026-11-03 16:00');
-        $this->assertSame(BookingStatus::MenungguPersetujuan, $staffBooking->approval_status);
+        // Slotnya sudah terkunci selama menunggu, jadi tidak bisa didahului orang lain.
+        $this->expectException(ValidationException::class);
+        $this->book(start: '2026-11-03 09:30', end: '2026-11-03 10:30');
     }
 
-    public function test_time_options_are_every_15_minutes_within_opening_hours(): void
+    public function test_any_minute_can_be_picked_and_is_combined_into_the_booking_time(): void
     {
+        $room = Area::factory()->kolaborasi()->create();
         $this->actingAs(User::factory()->create());
 
         $html = $this->get('/booking')->assertOk()->getContent();
+        $this->assertStringContainsString('value="07"', $html);
+        $this->assertStringContainsString('value="59"', $html);
 
-        $this->assertStringContainsString('value="06:00"', $html);
-        $this->assertStringContainsString('value="09:45"', $html);
-        $this->assertStringContainsString('value="22:00"', $html);
-        $this->assertStringNotContainsString('value="09:50"', $html);
-        $this->assertStringNotContainsString('value="05:45"', $html);
+        Volt::test('bookings.index')
+            ->set('room', $room->id)
+            ->set('date', '2026-11-03')
+            ->set('startHour', '09')
+            ->set('startMinute', '07')
+            ->set('endHour', '10')
+            ->assertSet('start_time', '09:07')
+            ->assertSet('end_time', '10:00')
+            ->set('endMinute', '43')
+            ->assertSet('end_time', '10:43')
+            ->set('purpose', 'Rapat singkat')
+            ->set('participant_count', 3)
+            ->call('book')
+            ->assertHasNoErrors();
+
+        $booking = RoomBooking::where('area_id', $room->id)->sole();
+        $this->assertSame('09:07', $booking->start_time->format('H:i'));
+        $this->assertSame('10:43', $booking->end_time->format('H:i'));
+    }
+
+    public function test_calendar_selection_fills_hour_and_minute(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        Volt::test('bookings.index')
+            ->call('pickSlot', '2026-11-03T14:30:00+07:00', '2026-11-03T16:00:00+07:00')
+            ->assertSet('startHour', '14')
+            ->assertSet('startMinute', '30')
+            ->assertSet('endHour', '16')
+            ->assertSet('endMinute', '00')
+            ->assertSet('start_time', '14:30');
     }
 
     public function test_booker_cancels_an_upcoming_booking(): void

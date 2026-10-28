@@ -20,6 +20,15 @@ new #[Title('Booking Ruangan')] class extends Component {
 
     public string $end_time = '';
 
+    // Jam & menit dipilih terpisah (semua menit 00–59), lalu digabung ke start_time/end_time.
+    public string $startHour = '';
+
+    public string $startMinute = '';
+
+    public string $endHour = '';
+
+    public string $endMinute = '';
+
     public string $purpose = '';
 
     public ?int $participant_count = null;
@@ -85,10 +94,31 @@ new #[Title('Booking Ruangan')] class extends Component {
         $e = Carbon::parse($end)->setTimezone(config('app.timezone'));
 
         $this->date = $s->toDateString();
-        $this->start_time = $s->format('H:i');
-        $this->end_time = $e->format('H:i');
+        [$this->startHour, $this->startMinute] = [$s->format('H'), $s->format('i')];
+        [$this->endHour, $this->endMinute] = [$e->format('H'), $e->format('i')];
+        $this->syncTimes();
         $this->savedMessage = null;
         $this->resetValidation();
+    }
+
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['startHour', 'startMinute', 'endHour', 'endMinute'], true)) {
+            // Menit default 00 saat jam dipilih lebih dulu.
+            if ($property === 'startHour' && $this->startMinute === '') {
+                $this->startMinute = '00';
+            }
+            if ($property === 'endHour' && $this->endMinute === '') {
+                $this->endMinute = '00';
+            }
+            $this->syncTimes();
+        }
+    }
+
+    protected function syncTimes(): void
+    {
+        $this->start_time = $this->startHour !== '' && $this->startMinute !== '' ? "{$this->startHour}:{$this->startMinute}" : '';
+        $this->end_time = $this->endHour !== '' && $this->endMinute !== '' ? "{$this->endHour}:{$this->endMinute}" : '';
     }
 
     protected function rules(): array
@@ -133,7 +163,7 @@ new #[Title('Booking Ruangan')] class extends Component {
         $this->savedMessage = $booking->approval_status === BookingStatus::Disetujui
             ? 'Booking terkonfirmasi.'
             : 'Booking terkirim dan menunggu persetujuan PIC ruangan.';
-        $this->reset('start_time', 'end_time', 'purpose', 'participant_count');
+        $this->reset('start_time', 'end_time', 'startHour', 'startMinute', 'endHour', 'endMinute', 'purpose', 'participant_count');
         $this->dispatch('booking-saved');
     }
 
@@ -149,23 +179,11 @@ new #[Title('Booking Ruangan')] class extends Component {
         return [
             'rooms' => $rooms,
             'selected' => $rooms->firstWhere('id', $this->room),
-            'timeOptions' => $this->timeOptions(),
+            // Jam mulai 06–21, jam selesai 06–22 (lewat 22:00 ditolak oleh BookingService); menit 00–59.
+            'startHours' => array_map(fn ($h) => sprintf('%02d', $h), range(BookingService::OPEN_HOUR, BookingService::CLOSE_HOUR - 1)),
+            'endHours' => array_map(fn ($h) => sprintf('%02d', $h), range(BookingService::OPEN_HOUR, BookingService::CLOSE_HOUR)),
+            'minutes' => array_map(fn ($m) => sprintf('%02d', $m), range(0, 59)),
         ];
-    }
-
-    /**
-     * Pilihan jam per 15 menit dalam jam operasional (06:00 … 22:00).
-     *
-     * @return list<string>
-     */
-    protected function timeOptions(): array
-    {
-        $times = [];
-        for ($m = BookingService::OPEN_HOUR * 60; $m <= BookingService::CLOSE_HOUR * 60; $m += 15) {
-            $times[] = sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
-        }
-
-        return $times;
     }
 }; ?>
 
@@ -231,19 +249,26 @@ new #[Title('Booking Ruangan')] class extends Component {
                 @endif
 
                 <flux:input wire:model="date" type="date" :min="today()->toDateString()" label="Tanggal" />
-                <div class="grid grid-cols-2 gap-3">
-                    <flux:select wire:model="start_time" label="Mulai" placeholder="--:--">
-                        @foreach ($timeOptions as $time)
-                            @continue($loop->last)
-                            <flux:select.option value="{{ $time }}">{{ $time }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    <flux:select wire:model="end_time" label="Selesai" placeholder="--:--">
-                        @foreach ($timeOptions as $time)
-                            @continue($loop->first)
-                            <flux:select.option value="{{ $time }}">{{ $time }}</flux:select.option>
-                        @endforeach
-                    </flux:select>
+                <div class="grid grid-cols-1 gap-3">
+                    @foreach ([['Mulai', 'startHour', 'startMinute', $startHours, 'start_time'], ['Selesai', 'endHour', 'endMinute', $endHours, 'end_time']] as [$label, $hourModel, $minuteModel, $hours, $field])
+                        <flux:field>
+                            <flux:label>{{ $label }}</flux:label>
+                            <div class="flex items-center gap-1">
+                                <flux:select wire:model.live="{{ $hourModel }}" placeholder="Jam" aria-label="{{ $label }} (jam)">
+                                    @foreach ($hours as $h)
+                                        <flux:select.option value="{{ $h }}">{{ $h }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                                <span class="font-semibold text-zinc-500">:</span>
+                                <flux:select wire:model.live="{{ $minuteModel }}" placeholder="Menit" aria-label="{{ $label }} (menit)">
+                                    @foreach ($minutes as $m)
+                                        <flux:select.option value="{{ $m }}">{{ $m }}</flux:select.option>
+                                    @endforeach
+                                </flux:select>
+                            </div>
+                            <flux:error :name="$field" />
+                        </flux:field>
+                    @endforeach
                 </div>
                 <flux:textarea wire:model="purpose" label="Tujuan rapat" rows="2" placeholder="Contoh: Rapat koordinasi shift" />
                 <flux:input wire:model="participant_count" type="number" min="1" :max="$selected?->capacity" label="Jumlah peserta" />
